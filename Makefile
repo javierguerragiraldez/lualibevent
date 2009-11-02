@@ -1,7 +1,6 @@
 #
 # levent: lua libevent binding
 # (c) 2009 Javier Guerra G.
-# $Id:  $
 #
  
 # Compilation parameters
@@ -17,7 +16,7 @@ CWARNS = -Wall -pedantic \
         -Wwrite-strings
 
 
-CFLAGS = $(CONFIG) $(CWARNS) -ansi -g -O2 -I/usr/local/include/lua5
+CFLAGS = $(CONFIG) $(CWARNS) -std=gnu99 -g -O2 -I/usr/include/lua5.1 -fPIC
 
 
 all : levent.so
@@ -26,3 +25,6 @@ levent.o : levent.c
 
 levent.so : levent.o
 	ld -o levent.so -shared levent.o -levent
+
+clean:
+	rm *.o *.so core core.* a.out

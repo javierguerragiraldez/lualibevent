@@ -1,0 +1,89 @@
+LualibEvent
+-----------
+
+usage:
+
+include "levent"
+
+module functions:
+=================
+
+levent.newbase()
+----------------
+Creates a new 'base' object.  All other objects are created in the context of a base object.
+
+levent.fdfromfile(fileobject)
+----------------------
+Given a standard Lua file object, this function returns the corresponding file descriptor as an integer.  To be used for the.  Should be associated with the file object's metatable, ie:
+
+	setfdaccessor (getmetatable(io.input()), fdfromfile)
+
+levent.setfdaccessor (metatable, fdaccessor)
+-------------------------------------
+Associates a function (fdaccessor) with the an object type, caracterized by its metatable.  fdaccessor must be a function that returns the file descriptor of an object with the given metatable.
+
+levent.fdfromvalue (value)
+-------------------
+Given a value, this function uses the previously assigned fdaccessors to return the file descriptor of the underlying file.
+
+
+base object methods:
+====================
+
+base:newevent (file, callback, evtype)
+---------------------------------
+Creates a new event object.  file must be an integer (a file descriptor) or any object whose metatable is registered with a corresponding fdaccessor.  evtype is a string like "r", "w" or "rw", to indicate if the callback function should be called when the file is readable, writeable, or on both events.
+
+The callback function is called with the file as the sole parameter.
+
+base:newevbuf (file, readcb, writecb, errorcb)
+-----------------------------------------
+Creates a 'buffered event' object.  This object adds buffers for reading and writing the given file.  Each buffer has a 'lowwater' and 'highwater' threshold.
+
+The readcb function is called when the read buffer has at least <lowwater> bytes readable.
+
+The writecb function is called when the write buffer has less than <lowwater> bytes on it.
+
+base:loop ([<homany>])
+--------------------
+This is the central loop of an event-driven program.  If the howmany parameter is nil or missing, this function won't finish while there's at least one event object active.  If howmany is 0, it will service pending events if any and return immediately.  If howmany is > 0, it will wait until the next event is fired, service it, and return immediately.
+
+
+event object methods
+====================
+
+event:start()
+-------------
+Activates the event object.
+
+event:stop()
+------------
+Deactivates the event object.
+
+event:delete()
+--------------
+Kills the event object, releasing the C structure and making the Lua object invalid.
+
+
+buffered event object methods
+=============================
+
+bufevent:start()
+-------------
+Activates the buffered event object.
+
+bufevent:stop()
+---------------
+Deactivates the event object.
+
+bufevent:read([size])
+---------------------
+Reads up to <size> bytes from the input buffer.  If size is nil or missing, it reads the whole buffer.
+
+bufevent:readline()
+-------------------
+Reads a single line from the input buffer.  If there's no linebreak already in the buffer, returns nil and doesn't drain the buffer (maybe the next event there will be a whole line available).
+
+bufevent:write (data)
+---------------------
+Writes the given data to the ouput buffer.
