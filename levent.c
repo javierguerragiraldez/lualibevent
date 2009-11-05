@@ -102,10 +102,18 @@ static int new_event_base (lua_State *L) {
 }
 
 static int g_fdacc_ref = LUA_NOREF;
+
 /* setaccessor (mt, f) */
 /* sets an fd accessor */
 static int set_accessor (lua_State *L) {
+	if (g_fdacc_ref == LUA_NOREF) {
+		lua_newtable (L);
+		g_fdacc_ref = luaL_ref (L, LUA_REGISTRYINDEX);
+	}
 															// (mt, f)
+	lua_rawgeti (L, LUA_REGISTRYINDEX, g_fdacc_ref);		// (mf, f, fdacc)
+	lua_insert (L, -2);										// (fdacc, mt, f)
+	lua_rawset (L, -2);
 	return 0;
 }
 
@@ -115,6 +123,8 @@ static int fd_from_value (lua_State *L) {
 															// (v)
 	if (lua_getmetatable (L, 1)) {							// (v mt)
 		lua_rawgeti (L, LUA_REGISTRYINDEX, g_fdacc_ref);	// (v mt fdacc)
+		if (lua_isnil (L, -1))
+			return luaL_error (L, "undefined object type");
 		lua_pushvalue (L, -2);								// (v mt fdacc mt)
 		lua_rawget (L, -2);									// (v mt fdacc f)
 		lua_pushvalue (L, 1);								// (v mt fdacc f v)
@@ -177,6 +187,7 @@ static int base_newevent (lua_State *L) {
 
 
 
+/* event buffer callbacks */
 
 static void basic_bfrdcb (struct bufferevent *evbf, void *v) {
 	lev_buffered *bf = v;
